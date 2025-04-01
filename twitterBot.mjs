@@ -1,6 +1,7 @@
 import Twit from 'twit';  // Import Twit using ES Modules
 import fetch from 'node-fetch';  // Import fetch using ES Modules
 import dotenv from 'dotenv';
+import cron from 'node-cron';  // Import node-cron for scheduling
 
 dotenv.config(); // Load environment variables
 
@@ -14,7 +15,6 @@ const twitterClient = new Twit({
 
 // Hugging Face API key
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-
 
 // Function to generate content from Hugging Face
 async function generateContent() {
@@ -31,7 +31,6 @@ async function generateContent() {
     return data[0]?.generated_text || 'Default tweet content'; // Return generated text or a fallback
 }
 
-
 // Function to post a tweet to Twitter
 function postTweet(content) {
     twitterClient.post('statuses/update', { status: content }, function (err, data, response) {
@@ -43,12 +42,16 @@ function postTweet(content) {
     });
 }
 
-
 // Function to run the bot
 async function run() {
     const content = await generateContent();  // Get generated content from Hugging Face
     postTweet(content);  // Post it to Twitter
 }
 
-// Run the bot every day (24 hours = 86400000 milliseconds)
-setInterval(run, 86400000);  // Posts every 24 hours
+// Schedule the bot to post twice a day at specific times (e.g., 8 AM and 8 PM)
+cron.schedule('0 8,20 * * *', () => {
+    console.log('Posting tweet at scheduled time...');
+    run();
+});
+
+console.log('Twitter bot is running...');
